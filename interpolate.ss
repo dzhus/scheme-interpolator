@@ -3,6 +3,8 @@
 (require srfi/1)
 (require "point.ss")
 (require "lambda-folds.ss")
+(require "shared.ss")
+
 (provide interpolate)
 
 (define (interpolate points method)
