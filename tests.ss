@@ -6,8 +6,12 @@
 
 (require "lambda-folds.ss")
 (require "shared.ss")
+(require "point.ss")
+(require "interpolate.ss")
 
-(define-test-suite shared-functions-test
+(define test-epsilon 0)
+
+(define-test-suite all-tests
   (test-suite
    "Lambda-folds"
    (let ((k1 (add1 (random-integer 1000)))
@@ -42,6 +46,7 @@
            (check-equal? (prod3 x) (* (f2 x) (f4 x)))
            (check-equal? (prod4 x) 1))
          (iota 10 -5 1)))))))
+
   (test-suite
    "Common functions"
    (let ((list1 '(5))
@@ -51,6 +56,28 @@
       (check-equal? (but-kth-item list1 0) '())
       (check-equal? (but-kth-item list2 0) '(2 3))
       (check-equal? (but-kth-item list2 1) '(1 3))
-      (check-equal? (but-kth-item list2 2) '(1 2))))))
+      (check-equal? (but-kth-item list2 2) '(1 2)))))
 
-(exit (run-tests shared-functions-test))
+  (test-suite
+   "Lagrange interpolation"
+   (test-begin
+    (let* ((test-functions
+            (list sin cos exp
+                  (lambda (x) (- 5 (* x x)))
+                  (lambda (x) (expt x 10))))
+           (intervals
+            (map (lambda (x) (iota 200 -100 0.5)) test-functions))
+           (grids
+            (map function->grid test-functions intervals)))
+      (for-each
+       (lambda (grid interval)
+         (let ((grid-interpolated
+                (function->grid (interpolate grid) interval)))
+           (for-each
+            (lambda (point point-interpolated)
+              (check-= (point-y point) (point-y point-interpolated)
+                       test-epsilon))
+            grid grid-interpolated)))        
+       grids intervals)))))
+
+(run-tests all-tests)
