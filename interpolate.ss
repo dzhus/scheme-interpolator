@@ -5,9 +5,15 @@
 (require "lambda-folds.ss")
 (require "shared.ss")
 
-(provide interpolate)
+(provide interpolate function->grid)
 
-(define (interpolate points method)
+(define (function->grid function grid)
+  (map (lambda (x) (make-point x (function x))) grid))
+
+(define (default-method)
+  lagrange-lambda-interpolation)
+
+(define (lagrange-lambda-interpolation points)
   (let ((k (length points)))
     (define (make-lagrange-fraction i)
       (define (make-lagrange-numer)
@@ -35,3 +41,7 @@
         (lambda (x) (* (point-y (list-ref points i))
                   ((make-lagrange-fraction i) x))))
       (iota k)))))
+  
+(define (interpolate points [method (default-method)])
+  (method points))
+
