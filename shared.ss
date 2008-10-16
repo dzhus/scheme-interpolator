@@ -1,11 +1,12 @@
 #lang scheme
 
-(require srfi/1)
+(require srfi/1
+         srfi/43)
 
 (provide but-kth-item
          max-nonzero-vector-index
          swap-vector-items
-         sum)
+         vector-sum)
 
 (define (but-kth-item list k)
   (append (take list k) (drop list (+ k 1))))
@@ -27,5 +28,5 @@
                         ((= n j) (vector-ref vec i))
                         (else (vector-ref vec n))))))
 
-(define (sum list)
-  (apply + list))
+(define (vector-sum vec)
+  (vector-fold (lambda (i sum x) (+ sum x)) 0 vec))

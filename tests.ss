@@ -7,7 +7,9 @@
 (require "lambda-folds.ss"
          "shared.ss"
          "point.ss"
-         "interpolate.ss")
+         "interpolate.ss"
+         "matrix.ss"
+         "gauss.ss")
 
 (define test-epsilon 0)
 
@@ -81,7 +83,26 @@
 (define-test-suite gauss-tests
   (test-case
    "Solve systems of linear equations"
-   (check-true #f)))
+   (check-equal? (solve-linear (matrix (row 1 3)
+                                       (row 5 9))
+                               (column 4 14))
+                 (vector 1 1))
+   (check-equal? (solve-linear (matrix (row 1 2 3)
+                                       (row 4 5 9)
+                                       (row 9 -10 0))
+                               (column 16 43 -50))
+                 (vector 0 5 2))
+   (check-equal? (solve-linear (matrix (row -4 5 2 65)
+                                       (row 2 -10 11 13)
+                                       (row 3/7 -6 192 2)
+                                       (row 6 0 13/8 0.5))
+                               (column 580 262 27399/14 35.75))
+                 (vector 2.5 -3.0 10.0 9.0))
+   (check-equal? (solve-linear (matrix (row 2 -9 5)
+                                       (row 1.2 -5.3999 6)
+                                       (row 1 -1 -7.5))
+                               (column -4 0.6001 -8.5))
+                 (vector 0.0 1.0 1.0))))
 
 (define-test-suite interpolation-tests
   (test-case
@@ -108,5 +129,4 @@
 (exit (run-tests (test-suite "All tests"
                              shared-tests
                              matrix-tests
-                             gauss-tests
-                             interpolation-tests)))
+                             gauss-tests)))
