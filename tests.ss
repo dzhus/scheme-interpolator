@@ -57,21 +57,21 @@
     (check-equal? (but-kth-item '(1 2 3) 2) '(1 2)))
 
    (test-case
-    "check-equal?"
-    (check-equal? (max-nonzero-index (vector 0 1 2)) 2)
-    (check-equal? (max-nonzero-index (vector 11 -12 10)) 0)
-    (check-equal? (max-nonzero-index (vector 0 7 9 -1000)) 2)
+    "max-nonzero-index in column"
+    (check-equal? (max-nonzero-vector-index (vector 0 1 2)) 2)
+    (check-equal? (max-nonzero-vector-index (vector 11 -12 10)) 0)
+    (check-equal? (max-nonzero-vector-index (vector 0 7 9 -1000)) 2)
     (let ((n (add1 (random-integer 1000))))
-      (check-equal? (max-nonzero-index (list->vector (iota n))) (sub1 n)))
-    (check-equal? (max-nonzero-index (vector 1 -1 (random-integer 9) -2 3 3 4 4 4 10 0)) 9))
+      (check-equal? (max-nonzero-vector-index (list->vector (iota n))) (sub1 n)))
+    (check-equal? (max-nonzero-vector-index (vector 1 -1 (random-integer 9) -2 3 3 4 4 4 10 0)) 9))
 
    (test-case
-    "Nondestructive vector items swapping (swap-items)"
-    (check-equal? (swap-items 0 1 (vector 1 2)) (vector 2 1))
-    (check-equal? (swap-items 1 3 (list->vector (iota 5))) (vector 0 3 2 1 4))
-    (check-equal? (swap-items 2 5 (vector 9 17 2 -5 -5 0 0 1)) (vector 9 17 0 -5 -5 2 0 1))
-    (check-equal? (swap-items 4 4 (vector 0 0 0 0 1)) (vector 0 0 0 0 1))
-    (check-equal? (swap-items 1 2 (vector 3 3 3)) (vector 3 3 3)))))
+    "Nondestructive vector items swapping (swap-vector-items)"
+    (check-equal? (swap-vector-items 0 1 (vector 1 2)) (vector 2 1))
+    (check-equal? (swap-vector-items 1 3 (list->vector (iota 5))) (vector 0 3 2 1 4))
+    (check-equal? (swap-vector-items 2 5 (vector 9 17 2 -5 -5 0 0 1)) (vector 9 17 0 -5 -5 2 0 1))
+    (check-equal? (swap-vector-items 4 4 (vector 0 0 0 0 1)) (vector 0 0 0 0 1))
+    (check-equal? (swap-vector-items 1 2 (vector 3 3 3)) (vector 3 3 3)))))
 
 (define-test-suite matrix-tests
   (test-case
