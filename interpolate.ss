@@ -9,12 +9,8 @@
          "shared.ss")
 
 (provide function->grid
-         interpolate
          lagrange-lambda-interpolation
          polynomial-interpolation)
-
-(define (default-method)
-  lagrange-lambda-interpolation)
 
 (define (function->grid function domain)
   (map (lambda (x) (make-point x (function x))) domain))
@@ -48,12 +44,10 @@
         (lambda (x) (* (point-y (list-ref points i))
                   ((make-lagrange-fraction i) x))))
       (iota k)))))
-  
-(define (interpolate points [method (default-method)])
-  (method points))
 
 ;; Build interpolation polynomial solving a system of linear equations
-;; (heavily prone to precision errors)
+;; with Vandermonde matrix (heavily prone to precision errors as usual
+;; Gauss elimination is used in `solve-linear`)
 (define (polynomial-interpolation points)
   (let* ((k (length points))
          (matrix (rows->matrix
