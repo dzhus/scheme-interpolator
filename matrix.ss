@@ -5,7 +5,7 @@
          "shared.ss")
 
 (provide matrix row column
-	 list->matrix list->row
+	 rows->matrix list->row list->column
          matrix-row row-item column-item matrix-item
          matrix-size row-length column-length
          row-drop-right row-drop-left
@@ -21,8 +21,9 @@
 (define row vector)
 (define column vector)
 
-(define list->matrix list->vector)
+(define rows->matrix list->vector)
 (define list->row list->vector)
+(define list->column list->vector)
 
 (define matrix-row vector-ref)
 (define row-item vector-ref)

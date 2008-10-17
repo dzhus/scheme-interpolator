@@ -104,6 +104,20 @@
                                (column -4 0.6001 -8.5))
                  (vector 0.0 1.0 1.0))))
 
+(define-check (check-interpolation method function points epsilon)
+  (let* ((grid
+          (function->grid function points))
+         (grid-interpolated
+          (function->grid (method grid) points)))
+    (for-each
+     (lambda (point point-interpolated)
+       (check-= (point-y point)
+                (point-y point-interpolated)
+                epsilon
+                (format "Interpolation ~s failed for ~s at x=~s" 
+                        method function (point-x point))))
+     grid grid-interpolated)))
+
 (define-test-suite interpolation-tests
   (test-case
    "Lagrange interpolation"
@@ -111,22 +125,18 @@
            (list sin cos exp
                  (lambda (x) (- 5 (* x x)))
                  (lambda (x) (expt x 10))))
-          (intervals
-           (map (lambda (x) (iota 100 -50 0.5)) test-functions))
-          (grids
-           (map function->grid test-functions intervals)))
+          (domains
+           (map (lambda (x) (iota 100 -25 0.5)) test-functions)))
      (for-each
-      (lambda (grid interval)
-        (let ((grid-interpolated
-               (function->grid (interpolate grid) interval)))
-          (for-each
-           (lambda (point point-interpolated)
-             (check-= (point-y point) (point-y point-interpolated)
-                      test-epsilon))
-           grid grid-interpolated)))
-     grids intervals))))
+      (lambda (f domain)
+        (check-interpolation lagrange-lambda-interpolation
+                             f domain test-epsilon)
+        (check-interpolation polynomial-interpolation
+                             f domain 1e-1))
+      test-functions domains))))
 
 (exit (run-tests (test-suite "All tests"
                              shared-tests
                              matrix-tests
+                             interpolation-tests
                              gauss-tests)))
