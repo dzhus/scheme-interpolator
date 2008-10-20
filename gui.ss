@@ -52,8 +52,11 @@
         (send dc draw-lines (map point->point% (function->grid f pts)))))
 
     (define/public (draw-plot)
-      (let ((f ((chosen-interpolation-method) points)))
-        (plot-function f (steps))))
+      (for-each
+       (lambda (method)
+         (let ((f (method points)))
+           (plot-function f (steps))))
+       (chosen-interpolation-methods)))
 
     (define (draw-points)
       (let* ((dc (get-dc))
@@ -123,10 +126,11 @@
                            [choices '("Lagrange (λ)" 
                                       "Lagrange (matrix)")]))
 
-(define (chosen-interpolation-method)
-  (let ((n (send method-choice get-selection)))
-    (vector-ref (vector lagrange-lambda-interpolation
-                        polynomial-interpolation)
-                n)))
+(define (chosen-interpolation-methods)
+  (list
+   (let ((n (send method-choice get-selection)))
+     (list-ref (list lagrange-lambda-interpolation
+                     polynomial-interpolation)
+               n))))
 
 (send frame show #t)
