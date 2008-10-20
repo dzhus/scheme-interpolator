@@ -58,7 +58,8 @@
        (let ((n (send this get-selection)))
          ;; @TODO make this list an initialization variable
          (list-ref (list lagrange-lambda-interpolation
-                         polynomial-interpolation)
+                         polynomial-interpolation
+                         spline-interpolation)
                    n))))))
 
 (define interpolation-pad%
@@ -74,15 +75,20 @@
     (define/public (clear-points)
       (set! points '()))
 
-    (define (plot-interpolation-result f steps)
-      (let ((dc (get-dc))
-            (pts (iota steps x-min (/ (- x-max x-min) steps))))
-        (if (eq? 'vector (interpolation-result-type f))
-            'dunno
-            (send dc draw-lines (map (lambda (point)
-                                       (point->point% point))
-                                     (function->grid 
-                                      (interpolation-result-function f) pts))))))
+    (define (plot-interpolation-result res steps)
+      (let ((dc (get-dc)))
+        (send dc draw-lines
+              (if (eq? 'vector (interpolation-result-type res))
+                  (map (lambda (v) (point->point% (vector->point v)))
+                       (map
+                        (interpolation-result-function res)
+                        (append
+                         (map (lambda (t) (/ t steps)) (iota steps))
+                         (list 1))))
+                  (map (lambda (point) (point->point% point))
+                       (function->grid 
+                        (interpolation-result-function res)
+                        (iota steps x-min (/ (- x-max x-min) steps))))))))
 
     (define/public (draw-plot)
       (for-each
@@ -139,7 +145,8 @@
                            [parent frame]
                            [label "Method"]
                            [choices '("Lagrange (λ)" 
-                                      "Lagrange (matrix)")]))
+                                      "Lagrange (matrix)"
+                                      "Splines")]))
 
 (define pad (new interpolation-pad%
                  [parent frame]
