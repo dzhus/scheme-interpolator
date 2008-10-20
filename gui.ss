@@ -68,8 +68,8 @@
                   (r (mark-radius))
                   (d (* r 2)))
              (send dc draw-ellipse
-                   (- (send pt get-x) r r)
-                   (- (send pt get-y) r r)
+                   (- (send pt get-x) r)
+                   (- (send pt get-y) r)
                    d d)))
          points)
         (send dc set-brush old-brush)))
