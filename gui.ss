@@ -74,18 +74,21 @@
     (define/public (clear-points)
       (set! points '()))
 
-    (define (plot-function f steps)
+    (define (plot-interpolation-result f steps)
       (let ((dc (get-dc))
             (pts (iota steps x-min (/ (- x-max x-min) steps))))
-        (send dc draw-lines (map (lambda (point)
-                                   (point->point% point))
-                                 (function->grid f pts)))))
+        (if (eq? 'vector (interpolation-result-type f))
+            'dunno
+            (send dc draw-lines (map (lambda (point)
+                                       (point->point% point))
+                                     (function->grid 
+                                      (interpolation-result-function f) pts))))))
 
     (define/public (draw-plot)
       (for-each
        (lambda (method)
          (let ((f (method points)))
-           (plot-function f (steps))))
+           (plot-interpolation-result f (steps))))
        (send method-chooser get-methods)))
 
     (define (draw-points)

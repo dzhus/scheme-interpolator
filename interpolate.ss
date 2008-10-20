@@ -3,6 +3,7 @@
 (require srfi/1
          srfi/43
          "point.ss"
+         "vectors.ss"
          "lambda-folds.ss"
          "matrix.ss"
          "gauss.ss"
@@ -10,7 +11,11 @@
 
 (provide function->grid
          lagrange-lambda-interpolation
-         polynomial-interpolation)
+         polynomial-interpolation
+         interpolation-result-type
+         interpolation-result-function)
+
+(define-struct interpolation-result (type function))
 
 (define (function->grid function domain)
   (map (lambda (x) (make-point x (function x))) domain))
@@ -38,12 +43,14 @@
       (lambda (x)
         (/ ((make-lagrange-numer) x)
            ((make-lagrange-denom) x))))
-    (lambda-sum
-     (map
-      (lambda (i)
-        (lambda (x) (* (point-y (list-ref points i))
-                  ((make-lagrange-fraction i) x))))
-      (iota k)))))
+    (make-interpolation-result
+     'scalar
+     (lambda-sum
+      (map
+       (lambda (i)
+         (lambda (x) (* (point-y (list-ref points i))
+                        ((make-lagrange-fraction i) x))))
+       (iota k))))))
 
 ;; Build interpolation polynomial solving a system of linear equations
 ;; with Vandermonde matrix (heavily prone to precision errors as usual
@@ -63,9 +70,11 @@
          (right-column (list->column
                         (map point-y points)))
          (coeffs (solve-linear matrix right-column)))
-    (lambda (x)
-      (vector-sum
-       (vector-map
-        (lambda (power coeff)
-          (* (expt x power) coeff))
-        coeffs)))))
+    (make-interpolation-result
+     'scalar
+     (lambda (x)
+       (vector-sum
+        (vector-map
+         (lambda (power coeff)
+           (* (expt x power) coeff))
+         coeffs))))))

@@ -103,12 +103,12 @@
                                        (row 1 -1 -7.5))
                                (column -4 0.6001 -8.5))
                  (vector 0.0 1.0 1.0))))
-
+
 (define-check (check-interpolation method function points epsilon)
   (let* ((grid
           (function->grid function points))
          (grid-interpolated
-          (function->grid (method grid) points)))
+          (function->grid (interpolation-result-function (method grid)) points)))
     (for-each
      (lambda (point point-interpolated)
        (check-= (point-y point)
