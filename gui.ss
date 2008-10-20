@@ -75,27 +75,29 @@
     (define/public (clear-points)
       (set! points '()))
 
-    (define (plot-interpolation-result res steps)
-      (let ((dc (get-dc)))
-        (send dc draw-lines
-              (if (eq? 'vector (interpolation-result-type res))
-                  (map (lambda (v) (point->point% (vector->point v)))
-                       (map
-                        (interpolation-result-function res)
-                        (append
-                         (map (lambda (t) (/ t steps)) (iota steps))
-                         (list 1))))
-                  (map (lambda (point) (point->point% point))
-                       (function->grid 
-                        (interpolation-result-function res)
-                        (iota steps x-min (/ (- x-max x-min) steps))))))))
-
+    (define (interpolation-result->points% res steps)
+      (define (scalar f range)
+        (map (lambda (p) (point->point% p))
+             (function->grid f range)))
+      (define (vector f range)
+        (map (lambda (v) (point->point% (vector->point v)))
+             (map f range)))
+      (if (eq? 'vector (interpolation-result-type res))
+          (vector (interpolation-result-function res)
+                       (append
+                        (map (lambda (t) (/ t steps)) (iota steps))
+                        (list 1)))
+          (scalar (interpolation-result-function res)
+                       (iota steps x-min (/ (- x-max x-min) steps)))))
+    
     (define/public (draw-plot)
-      (for-each
-       (lambda (method)
-         (let ((f (method points)))
-           (plot-interpolation-result f (steps))))
-       (send method-chooser get-methods)))
+      (let ((dc (get-dc)))
+        (for-each
+         (lambda (method)
+           (let ((f (method points)))
+             (send dc draw-lines
+                   (interpolation-result->points% f (steps)))))
+         (send method-chooser get-methods))))
 
     (define (draw-points)
       (let* ((dc (get-dc))
