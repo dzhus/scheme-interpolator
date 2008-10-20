@@ -12,29 +12,21 @@
 
 (define (mark-radius) 2)
 
-(define plane%
+;; A canvas which shows a part of cartesian plane. The class knows how
+;; to translate clicks on canvas to cartesian coordinates (represented
+;; with `point` structure) and is also capable of converting these
+;; coordinates to `point%` instances (which may be further drawn with
+;; `draw-lines` from `scheme/plot`)
+(define plane-frame%
   (class canvas%
     (inherit get-client-size get-dc)
+    
     ;; Bounds of currently visible plane frame
-    (init x-min y-min x-max y-max)
+    (init-field x-min y-min x-max y-max)
+    
     (super-new)
 
-    (define points '())
-
-    (define (click->point click-event)
-      (let-values (((width height) (get-client-size)))
-        (let* ((click-x (send click-event get-x))
-               (click-y (send click-event get-y))
-               (x-factor (/ click-x width))
-               (y-factor (/ click-y height))
-               (x (+ x-min (* 1.0 x-factor (- x-max x-min))))
-               (y (- y-max (* 1.0 y-factor (- y-max y-min)))))
-          (make-point x y))))
-
-    (define/public (clear-points)
-      (set! points '()))
-
-    (define (point->point% point)
+    (define/public (point->point% point)
       (let-values (((width height) (get-client-size)))
         (let* ((x (point-x point))
                (y (point-y point))
@@ -45,18 +37,56 @@
                                (- y-max y-min))
                             height)))
           (make-object point% client-x client-y))))
+    
+    (define/public (click->point click-event)
+      (let-values (((width height) (get-client-size)))
+        (let* ((click-x (send click-event get-x))
+               (click-y (send click-event get-y))
+               (x-factor (/ click-x width))
+               (y-factor (/ click-y height))
+               (x (+ x-min (* 1.0 x-factor (- x-max x-min))))
+               (y (- y-max (* 1.0 y-factor (- y-max y-min)))))
+          (make-point x y))))))
+
+;; A choice widget which maps selected items to interpolation methods
+(define method-choice%
+  (class choice%
+    (super-new)
+    
+    (define/public (get-methods)
+      (list
+       (let ((n (send this get-selection)))
+         ;; @TODO make this list an initialization variable
+         (list-ref (list lagrange-lambda-interpolation
+                         polynomial-interpolation)
+                   n))))))
+
+(define interpolation-pad%
+  (class plane-frame%
+    (inherit click->point point->point% get-dc)
+    (inherit-field x-min x-max)
+
+    (init-field method-chooser)
+    (super-new)
+
+    (define points '())
+
+    (define/public (clear-points)
+      (set! points '()))
 
     (define (plot-function f steps)
       (let ((dc (get-dc))
             (pts (iota steps x-min (/ (- x-max x-min) steps))))
-        (send dc draw-lines (map point->point% (function->grid f pts)))))
+        (send dc draw-lines (map (lambda (point)
+                                   (point->point% point))
+                                 (function->grid f pts)))))
 
     (define/public (draw-plot)
       (for-each
        (lambda (method)
          (let ((f (method points)))
            (plot-function f (steps))))
-       (chosen-interpolation-methods)))
+       (send method-chooser get-methods)))
 
     (define (draw-points)
       (let* ((dc (get-dc))
@@ -102,35 +132,28 @@
                    [width 500]
                    [height 500]))
 
-(define canvas (new plane%
-                    [parent frame]
-                    [x-min -10] [y-min -5]
-                    [x-max 10] [y-max 5]))
+(define method-choice (new method-choice%
+                           [parent frame]
+                           [label "Method"]
+                           [choices '("Lagrange (λ)" 
+                                      "Lagrange (matrix)")]))
+
+(define pad (new interpolation-pad%
+                 [parent frame]
+                 [x-min -10] [y-min -5]
+                 [x-max 10] [y-max 5]
+                 [method-chooser method-choice]))
 
 (new button%
-     [callback (lambda (b e) (send canvas draw-interpolation))]
+     [callback (lambda (b e) (send pad draw-interpolation))]
      [parent frame]
      [label "Interpolate"])
 (new button%
-     [callback (lambda (b e) (send canvas clear-interpolation))]
+     [callback (lambda (b e) (send pad clear-interpolation))]
      [parent frame]
      [label "Clear"])
 
 (define smoothing?-check-box (new check-box%
                                   [parent frame]
                                   [label "Smoothing"]))
-
-(define method-choice (new choice%
-                           [parent frame]
-                           [label "Method"]
-                           [choices '("Lagrange (λ)" 
-                                      "Lagrange (matrix)")]))
-
-(define (chosen-interpolation-methods)
-  (list
-   (let ((n (send method-choice get-selection)))
-     (list-ref (list lagrange-lambda-interpolation
-                     polynomial-interpolation)
-               n))))
-
 (send frame show #t)
