@@ -62,18 +62,54 @@
                          spline-interpolation)
                    n))))))
 
-(define interpolation-pad%
+;; A `plane-frame%` which translates clicks to plane points and stores
+;; them in a list field
+(define point-pad%
   (class plane-frame%
     (inherit click->point point->point% get-dc)
-    (inherit-field x-min x-max)
+    
+    (super-new)
+    
+    (field (points '()))
+    
+    (define/public (clear-points)
+      (set! points '()))
+
+    (define/public (draw-point p)
+      (let* ((dc (get-dc))
+             (old-brush (send dc get-brush)))
+        (send dc set-brush "black" 'solid)
+        (let* ((pt (point->point% p))
+               (r (mark-radius))
+               (d (* r 2)))
+          (send dc draw-ellipse
+                (- (send pt get-x) r)
+                (- (send pt get-y) r)
+                d d))
+        (send dc set-brush old-brush)))
+    
+    (define/override (on-event event)
+      (cond ((send event dragging?)
+             (let* ((last-point (last points))
+                    (new-direction (points->vector last-point
+                                                   (click->point event)))
+                    (new-point (make-point (point-x last-point)
+                                           (point-y last-point)
+                                           new-direction)))
+               (printf "~a\n" (point-dir new-point))
+               (set! points (append (drop-right points 1)
+                                    (list new-point)))
+               (printf "~a\n" (point-dir (last points)))))
+            ((send event button-down?)
+             (set! points (append points (list (click->point event)))))))))
+
+(define interpolation-pad%
+  (class point-pad%
+    (inherit point->point% clear-points draw-point get-dc)
+    (inherit-field x-min x-max points)
 
     (init-field method-chooser)
     (super-new)
-
-    (define points '())
-
-    (define/public (clear-points)
-      (set! points '()))
 
     (define (interpolation-result->points% res steps)
       (define (scalar f range)
@@ -90,7 +126,7 @@
           (scalar (interpolation-result-function res)
                        (iota steps x-min (/ (- x-max x-min) steps)))))
     
-    (define/public (draw-plot)
+    (define/public (draw-interpolation-plots points)
       (let ((dc (get-dc)))
         (for-each
          (lambda (method)
@@ -98,22 +134,6 @@
              (send dc draw-lines
                    (interpolation-result->points% f (steps)))))
          (send method-chooser get-methods))))
-
-    (define (draw-points)
-      (let* ((dc (get-dc))
-             (old-brush (send dc get-brush)))
-        (send dc set-brush "black" 'solid)
-        (for-each
-         (lambda (p)
-           (let* ((pt (point->point% p))
-                  (r (mark-radius))
-                  (d (* r 2)))
-             (send dc draw-ellipse
-                   (- (send pt get-x) r)
-                   (- (send pt get-y) r)
-                   d d)))
-         points)
-        (send dc set-brush old-brush)))
 
     (define/public (clear-interpolation)
       (let ((dc (get-dc)))
@@ -127,16 +147,15 @@
             (send dc set-smoothing 'unsmoothed))
         (send dc clear))
       (when (not (null? points))
-        (draw-plot)
-        (draw-points)))
+        (draw-interpolation-plots points)
+        (for-each (lambda (p) (draw-point p)) points)))
 
     (define/override (on-paint)
       (draw-interpolation))
 
     (define/override (on-event event)
-      (when (send event button-down?)
-        (set! points (append points (list (click->point event))))
-        (draw-interpolation)))))
+      (super on-event event)
+      (draw-interpolation))))
 
 (define frame (new frame% 
                    [label "Interpolator"]
