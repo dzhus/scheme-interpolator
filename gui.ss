@@ -120,6 +120,8 @@
     (inherit point->point% clear-points draw-point get-dc)
     (inherit-field x-min x-max points)
 
+    ;; An object with `get-methods` method yielding a list of chosen
+    ;; interpolation methods
     (init-field method-chooser)
     (super-new)
 
@@ -136,16 +138,19 @@
                         (map (lambda (t) (/ t steps)) (iota steps))
                         (list 1)))
           (scalar (interpolation-result-function res)
-                       (iota steps x-min (/ (- x-max x-min) steps)))))
+                  (iota steps x-min (/ (- x-max x-min) steps)))))
+
+    (define (draw-interpolation-result res)
+      (let ((dc (get-dc)))
+        (send dc draw-lines
+              (interpolation-result->points% res (steps)))))
     
-    (define/public (draw-interpolation-plots points)
+    (define/public (draw-interpolation-plots points methods)
       (let ((dc (get-dc)))
         (for-each
          (lambda (method)
-           (let ((f (method points)))
-             (send dc draw-lines
-                   (interpolation-result->points% f (steps)))))
-         (send method-chooser get-methods))))
+           (draw-interpolation-result (method points)))
+         methods)))
 
     (define/public (clear-interpolation)
       (let ((dc (get-dc)))
@@ -154,13 +159,11 @@
 
     (define/public (draw-interpolation)
       (let ((dc (get-dc)))
-        (if (send smoothing?-check-box get-value)
-            (send dc set-smoothing 'smoothed)
-            (send dc set-smoothing 'unsmoothed))
-        (send dc clear))
-      (when (not (null? points))
-        (draw-interpolation-plots points)
-        (for-each (lambda (p) (draw-point p)) points)))
+        (when (not (null? points))
+          (send dc clear)
+          (draw-interpolation-plots points
+                                    (send method-chooser get-methods))
+          (for-each (lambda (p) (draw-point p)) points))))
 
     (define/override (on-paint)
       (draw-interpolation))
@@ -186,6 +189,8 @@
                  [x-max 10] [y-max 5]
                  [method-chooser method-choice]))
 
+(send (send pad get-dc) set-smoothing 'smoothed)
+
 (new button%
      [callback (lambda (b e) (send pad draw-interpolation))]
      [parent frame]
@@ -195,7 +200,4 @@
      [parent frame]
      [label "Clear"])
 
-(define smoothing?-check-box (new check-box%
-                                  [parent frame]
-                                  [label "Smoothing"]))
 (send frame show #t)
