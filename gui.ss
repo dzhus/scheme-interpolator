@@ -71,9 +71,24 @@
     (super-new)
     
     (field (points '()))
+
+    (define/public (add-point p)
+      (set! points (append points (list p)))
+      (points-updated))
     
     (define/public (clear-points)
-      (set! points '()))
+      (set! points '())
+      (points-updated))
+
+    (define/public (set-kth-point! k p)
+      (set! points
+            (append
+             (take points k)
+             (list p)
+             (drop points (add1 k))))
+      (points-updated))
+
+    (define/public (points-updated) points)
 
     (define/public (draw-point p)
       (let* ((dc (get-dc))
@@ -96,12 +111,9 @@
                     (new-point (make-point (point-x last-point)
                                            (point-y last-point)
                                            new-direction)))
-               (printf "~a\n" (point-dir new-point))
-               (set! points (append (drop-right points 1)
-                                    (list new-point)))
-               (printf "~a\n" (point-dir (last points)))))
+               (set-kth-point! (sub1 (length points)) new-point)))
             ((send event button-down?)
-             (set! points (append points (list (click->point event)))))))))
+             (add-point (click->point event)))))))
 
 (define interpolation-pad%
   (class point-pad%
@@ -153,8 +165,7 @@
     (define/override (on-paint)
       (draw-interpolation))
 
-    (define/override (on-event event)
-      (super on-event event)
+    (define/override (points-updated)
       (draw-interpolation))))
 
 (define frame (new frame% 
