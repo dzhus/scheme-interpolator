@@ -82,8 +82,8 @@
 
 ;; Spline interpolation prototype
 (define (spline-interpolation points [t1 0] [t2 1])
-  (let ((p1 (point->vector (first points)))
-        (p2 (point->vector (last points)))
+  (let ((p1 (endpoint->vector (first points)))
+        (p2 (endpoint->vector (last points)))
         (dp1 (point-dir (first points)))
         (dp2 (point-dir (last points))))
     (let ((b1 p1)
