@@ -31,16 +31,20 @@
   (interface ()
     point->point% click->point))
 
+;; A rectangular region of cartesian plane with methods for
+;; interaction and visualization
 (define plane-frame-mixin
   (mixin
       (window<%>)
       (plane-frame-interface)
     
       (inherit get-client-size)
+      ;; Boundaries of region
       (init-field x-min y-min x-max y-max)
 
       (super-new)
 
+      ;; Convert a point of the plane to a drawable `point%` instance
       (define/public (point->point% point)
         (let-values (((width height) (get-client-size)))
           (let* ((x (point-x point))
@@ -53,6 +57,8 @@
                               height)))
             (make-object point% client-x client-y))))
 
+      ;; Translate a click on area to a point of the plane (respecting
+      ;; client size and region boundaries)
       (define/public (click->point click-event)
         (let-values (((width height) (get-client-size)))
           (let* ((click-x (send click-event get-x))
@@ -67,6 +73,7 @@
   (interface ()
     add-point clear-points set-kth-point! points-updated draw-point))
 
+;; A plane-frame user may pick points on interactively
 (define points-pad-mixin
   (mixin
       (plane-frame-interface canvas<%>)
@@ -94,6 +101,9 @@
                (drop points (add1 k))))
         (points-updated))
 
+      ;; Subject to augmentation in subclassing classes, a method
+      ;; called when calls to `add-point`, `clear-points` and
+      ;; `set-kth-point!` occur
       (define/pubment (points-updated)
         (inner points points-updated))
 
@@ -110,6 +120,9 @@
                   d d))
           (send dc set-brush old-brush)))
 
+      ;; A click on area adds a new point, dragging adds a point at
+      ;; position where dragging began with vector pointing out from
+      ;; this point to where dragging ended
       (define/override (on-event event)
         (cond ((send event dragging?)
                (let* ((last-point (last points))
@@ -126,6 +139,7 @@
   (interface ()
     plot-function))
 
+;; A plane-frame which plots different types of functions
 (define plotting-frame-mixin
   (mixin
       (plane-frame-interface canvas<%>)
@@ -139,7 +153,7 @@
       (define (function->points% fun samples)
         ;; Scalar functions f(x)
         (define (map-scalar f range)
-          (map (lambda (p) (point->point% p)) ; we can't write `point->point%` here
+          (map (lambda (p) (point->point% p))
                (function->grid f range)))
         ;; Vector functions r(t)
         (define (map-vector f range)
@@ -168,6 +182,8 @@
     redraw-interpolation
     clear-interpolation))
 
+;; A plane-frame where user may pick points and interpolate them using
+;; different methods
 (define interpolation-workspace-mixin
   (mixin
       (points-pad-interface
@@ -180,12 +196,16 @@
       (init-field method-chooser)
       (super-new)
 
+      ;; For each method in given list, plot a function which
+      ;; interpolates list of points
       (define/public (draw-interpolation-plots points methods)
         (for-each
          (lambda (method)
            (plot-function (method points)))
          methods))
 
+      ;; Mark all points in the frame and interpolate them using every
+      ;; method from a list `method-chooser` returns
       (define/public (redraw-interpolation)
         (let ((dc (get-dc)))
           (when (not (null? points))
