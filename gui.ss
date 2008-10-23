@@ -6,9 +6,10 @@
          plot/extend)
 
 (require "interpolate.ss"
-         "point.ss")
+         "point.ss"
+         "function.ss")
 
-(define (steps) 500)
+(define (samples) 500)
 
 (define (mark-radius) 2)
 
@@ -121,21 +122,21 @@
               ((send event button-down?)
                (add-point (click->point event)))))))
 
-(define interpolating-frame-interface
+(define plotting-frame-interface
   (interface ()
-    draw-interpolation-result))
+    plot-function))
 
-(define interpolating-frame-mixin
+(define plotting-frame-mixin
   (mixin
       (plane-frame-interface canvas<%>)
-      (interpolating-frame-interface)
+      (plotting-frame-interface)
     
       (inherit point->point% get-dc)
       (inherit-field x-min x-max)
       
       (super-new)
 
-      (define (interpolation-result->points% res steps)
+      (define (function->points% fun samples)
         ;; Scalar functions f(x)
         (define (map-scalar f range)
           (map (lambda (p) (point->point% p)) ; we can't write `point->point%` here
@@ -144,20 +145,22 @@
         (define (map-vector f range)
           (map (lambda (v) (point->point% (vector->point v)))
                (map f range)))
-        (let ((res-type (interpolation-result-type res)))
-          (cond ((eq? 'vector res-type)
-                 (map-vector (interpolation-result-function res)
-                             (append
-                              (map (lambda (t) (/ t steps)) (iota steps))
-                              (list 1))))
-                ((eq? 'scalar res-type)
-                 (map-scalar (interpolation-result-function res)
-                             (iota steps x-min (/ (- x-max x-min) steps)))))))
+        (let ((fun-type (function-type fun)))
+          (cond ((eq? 'vector fun-type)
+                 (let ((min-arg (function-min-arg fun))
+                       (max-arg (function-max-arg fun)))
+                   (map-vector (function-lambda fun)
+                               (append
+                                (iota samples min-arg (/ max-arg samples))
+                                (list max-arg)))))
+                ((eq? 'scalar fun-type)
+                 (map-scalar (function-lambda fun)
+                             (iota samples x-min (/ (- x-max x-min) samples)))))))
 
-      (define/public (draw-interpolation-result res [steps 500])
+      (define/public (plot-function fun samples)
         (let ((dc (get-dc)))
           (send dc draw-lines
-                (interpolation-result->points% res steps))))))
+                (function->points% fun samples))))))
 
 (define interpolation-workspace-interface
   (interface ()
@@ -168,11 +171,11 @@
 (define interpolation-workspace-mixin
   (mixin
       (points-pad-interface
-       interpolating-frame-interface
+       plotting-frame-interface
        canvas<%>)
       (interpolation-workspace-interface)
 
-      (inherit get-dc clear-points draw-point draw-interpolation-result)
+      (inherit get-dc clear-points draw-point plot-function)
       (inherit-field points)
       (init-field method-chooser)
       (super-new)
@@ -180,7 +183,7 @@
       (define/public (draw-interpolation-plots points methods)
         (for-each
          (lambda (method)
-           (draw-interpolation-result (method points)))
+           (plot-function (method points)))
          methods))
 
       (define/public (redraw-interpolation)
@@ -215,7 +218,7 @@
                                       "Splines")]))
 
 (define pad (new (interpolation-workspace-mixin
-                  (interpolating-frame-mixin
+                  (plotting-frame-mixin
                    (points-pad-mixin
                     (plane-frame-mixin
                      canvas%))))

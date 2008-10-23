@@ -1,5 +1,7 @@
 #lang scheme
 
+;;; Different interpolation methods
+
 (require srfi/1
          srfi/43
          "point.ss"
@@ -7,16 +9,13 @@
          "lambda-folds.ss"
          "matrix.ss"
          "gauss.ss"
-         "shared.ss")
+         "shared.ss"
+         "function.ss")
 
 (provide function->grid
          lagrange-lambda-interpolation
          polynomial-interpolation
-         spline-interpolation
-         interpolation-result-type
-         interpolation-result-function)
-
-(define-struct interpolation-result (type function))
+         spline-interpolation)
 
 (define (function->grid function domain)
   (map (lambda (x) (make-point x (function x))) domain))
@@ -44,7 +43,7 @@
       (lambda (x)
         (/ ((make-lagrange-numer) x)
            ((make-lagrange-denom) x))))
-    (make-interpolation-result
+    (make-function
      'scalar
      (lambda-sum
       (map
@@ -71,7 +70,7 @@
          (right-column (list->column
                         (map point-y points)))
          (coeffs (solve-linear matrix right-column)))
-    (make-interpolation-result
+    (make-function
      'scalar
      (lambda (x)
        (vector-sum
@@ -100,7 +99,7 @@
                                  (/ 2 (expt t2 3)))
                 (vector-/-number dp1 (sqr t2)))
                (vector-/-number dp2 (sqr t2)))))
-  (make-interpolation-result
+  (make-function
    'vector
    (lambda (t)
      (add-vectors
@@ -109,4 +108,5 @@
        (vector-*-number b2 t)
        (add-vectors
         (vector-*-number b3 (sqr t))
-        (vector-*-number b4 (expt t 3))))))))))
+        (vector-*-number b4 (expt t 3))))))
+   t1 t2))))
