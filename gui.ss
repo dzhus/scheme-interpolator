@@ -201,7 +201,7 @@
       (define/public (draw-interpolation-plots points methods)
         (for-each
          (lambda (method)
-           (plot-function (method points)))
+           (plot-function (method points) (samples)))
          methods))
 
       ;; Mark all points in the frame and interpolate them using every
