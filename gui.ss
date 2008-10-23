@@ -93,7 +93,8 @@
                (drop points (add1 k))))
         (points-updated))
 
-      (define/public (points-updated) points)
+      (define/pubment (points-updated)
+        (inner points points-updated))
 
       (define/public (draw-point p)
         (let* ((dc (get-dc))
@@ -198,7 +199,7 @@
       (define/override (on-paint)
         (redraw-interpolation))
 
-      (define/override (points-updated)
+      (define/augment (points-updated)
         (redraw-interpolation))))
 
 (define frame (new frame%
