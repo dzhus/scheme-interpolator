@@ -179,8 +179,7 @@
 (define interpolation-workspace-interface
   (interface ()
     draw-interpolation-plots
-    redraw-interpolation
-    clear-interpolation))
+    redraw-interpolation))
 
 ;; A plane-frame where user may pick points and interpolate them using
 ;; different methods
@@ -208,16 +207,12 @@
       ;; method from a list `method-chooser` returns
       (define/public (redraw-interpolation)
         (let ((dc (get-dc)))
+          (send dc clear)
           (when (not (null? points))
-            (send dc clear)
             (draw-interpolation-plots points
                                       (send method-chooser get-methods))
             (for-each (lambda (p) (draw-point p)) points))))
       
-      (define/public (clear-interpolation)
-        (let ((dc (get-dc)))
-          (clear-points)
-          (send dc clear)))
 
       (define/override (on-paint)
         (redraw-interpolation))
@@ -254,7 +249,7 @@
      [parent frame]
      [label "Interpolate"])
 (new button%
-     [callback (lambda (b e) (send pad clear-interpolation))]
+     [callback (lambda (b e) (send pad clear-points))]
      [parent frame]
      [label "Clear"])
 
