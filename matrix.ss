@@ -15,7 +15,8 @@
          first-column add-column
          absmax-nonzero-column-index
          swap-matrix-rows
-         matrix-map)
+         matrix-map
+         build-matrix)
 
 (define matrix vector)
 (define row vector)
@@ -77,3 +78,9 @@
                    (proc i j item))
                  row))
               matrix))
+
+(define (build-matrix proc rows columns)
+  (matrix-map (lambda (i j e) (proc i j))
+              (make-vector rows (make-vector columns))))
+
+  
