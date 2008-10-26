@@ -29,7 +29,7 @@
 
 (define plane-frame-interface
   (interface ()
-    point->point% click->point))
+    point->drawable click->point))
 
 ;; A rectangular region of cartesian plane with methods for
 ;; interaction and visualization
@@ -45,7 +45,7 @@
       (super-new)
 
       ;; Convert a point of the plane to a drawable `point%` instance
-      (define/public (point->point% point)
+      (define/public (point->drawable point)
         (let-values (((width height) (get-client-size)))
           (let* ((x (point-x point))
                  (y (point-y point))
@@ -79,7 +79,7 @@
       (plane-frame-interface canvas<%>)
       (points-pad-interface)
     
-      (inherit click->point point->point% get-dc)
+      (inherit click->point point->drawable get-dc)
 
       (super-new)
 
@@ -111,7 +111,7 @@
         (let* ((dc (get-dc))
                (old-brush (send dc get-brush)))
           (send dc set-brush "black" 'solid)
-          (let* ((pt (point->point% p))
+          (let* ((pt (point->drawable p))
                  (r (mark-radius))
                  (d (* r 2)))
             (send dc draw-ellipse
@@ -145,19 +145,21 @@
       (plane-frame-interface canvas<%>)
       (plotting-frame-interface)
     
-      (inherit point->point% get-dc)
+      (inherit point->drawable get-dc)
       (inherit-field x-min x-max)
       
       (super-new)
 
-      (define (function->points% fun samples)
+      ;; Generate a list of drawable `point%` instances given a
+      ;; function structure and sampling rate
+      (define (function->drawable fun samples)
         ;; Scalar functions f(x)
         (define (map-scalar f range)
-          (map (lambda (p) (point->point% p))
+          (map (lambda (p) (point->drawable p))
                (function->grid f range)))
         ;; Vector functions r(t)
         (define (map-vector f range)
-          (map (lambda (v) (point->point% (vector->point v)))
+          (map (lambda (v) (point->drawable (vector->point v)))
                (map f range)))
         (let ((fun-type (function-type fun)))
           (cond ((eq? 'vector fun-type)
@@ -174,7 +176,7 @@
       (define/public (plot-function fun samples)
         (let ((dc (get-dc)))
           (send dc draw-lines
-                (function->points% fun samples))))))
+                (function->drawable fun samples))))))
 
 (define interpolation-workspace-interface
   (interface ()
@@ -204,7 +206,7 @@
          methods))
 
       ;; Mark all points in the frame and interpolate them using every
-      ;; method from a list `method-chooser` returns
+      ;; method from a list returned by `method-chooser`
       (define/public (redraw-interpolation)
         (let ((dc (get-dc)))
           (send dc clear)
