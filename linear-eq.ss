@@ -56,7 +56,7 @@
         ;; Choose maximum element in first column and make that row a
         ;; new top to avoid accidental division by zero (non-zero
         ;; element always exists as A is invertible)
-        (let* ((leading-row (max-nonzero-column-index
+        (let* ((leading-row (absmax-nonzero-column-index
                              (first-column equations)))
                (equations (swap-matrix-rows 0 leading-row equations)))
           (if (= (top-left equations) 0)

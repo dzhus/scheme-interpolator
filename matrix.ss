@@ -13,7 +13,7 @@
          matrix-but-first-row
          matrix-but-first-column
          first-column add-column
-         max-nonzero-column-index
+         absmax-nonzero-column-index
          swap-matrix-rows
          matrix-map)
 
@@ -67,7 +67,7 @@
                 (vector-append matrix-row (vector column-item)))
               matrix column))
 
-(define max-nonzero-column-index max-nonzero-vector-index)
+(define absmax-nonzero-column-index absmax-nonzero-vector-index)
 (define swap-matrix-rows swap-vector-items)
 
 (define (matrix-map proc matrix)

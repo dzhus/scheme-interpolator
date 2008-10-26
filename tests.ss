@@ -62,13 +62,13 @@
     (check-equal? (but-kth-item '(1 2 3) 2) '(1 2)))
 
    (test-case
-    "max-nonzero-index in column"
-    (check-equal? (max-nonzero-vector-index (vector 0 1 2)) 2)
-    (check-equal? (max-nonzero-vector-index (vector 11 -12 10)) 0)
-    (check-equal? (max-nonzero-vector-index (vector 0 7 9 -1000)) 2)
+    "absmax-nonzero-index in column"
+    (check-equal? (absmax-nonzero-vector-index (vector 0 1 2)) 2)
+    (check-equal? (absmax-nonzero-vector-index (vector 11 -12 10)) 1)
+    (check-equal? (absmax-nonzero-vector-index (vector 0 7 999 -1000)) 3)
     (let ((n (add1 (random-integer 1000))))
-      (check-equal? (max-nonzero-vector-index (list->vector (iota n))) (sub1 n)))
-    (check-equal? (max-nonzero-vector-index (vector 1 -1 (random-integer 9) -2 3 3 4 4 4 10 0)) 9))
+      (check-equal? (absmax-nonzero-vector-index (list->vector (iota n))) (sub1 n)))
+    (check-equal? (absmax-nonzero-vector-index (vector 1 -1 (random-integer 9) -2 3 3 4 4 10 -10 0)) 8))
 
    (test-case
     "Nondestructive vector items swapping (swap-vector-items)"

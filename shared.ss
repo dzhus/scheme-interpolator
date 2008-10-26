@@ -4,18 +4,18 @@
          srfi/43)
 
 (provide but-kth-item
-         max-nonzero-vector-index
+         absmax-nonzero-vector-index
          swap-vector-items
          vector-sum)
 
 (define (but-kth-item list k)
   (append (take list k) (drop list (+ k 1))))
 
-(define (max-nonzero-vector-index vec)
+(define (absmax-nonzero-vector-index vec)
   (fold
    (lambda (i prev)
-     (if (> (vector-ref vec i) 
-            (vector-ref vec prev))
+     (if (> (abs (vector-ref vec i))
+            (abs (vector-ref vec prev)))
          i
          prev))
    0
