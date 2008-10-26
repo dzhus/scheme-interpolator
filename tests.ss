@@ -84,7 +84,7 @@
    (check-true #f)))
 
 (define-check (check-vectors v1 v2 epsilon)
-  (vector-for-each (lambda (i x y) (check-= x y epsilon)) v1 v2))
+  (vector= (lambda (x y) (check-= x y epsilon)) v1 v2))
 
 (define-test-suite lineq-tests
   (test-case
