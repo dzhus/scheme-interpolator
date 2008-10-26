@@ -81,9 +81,9 @@
     ;; below
     (define (c i) (matrix-item A i (add1 i)))
     (define (d i) (vector-ref v i))
-    (let ([alpha-beta (vector-unfold-right
+    (let ([alpha-beta (vector-unfold
                        (lambda (i alpha beta)
-                         (let ([i (- k i)])
+                         (let ([i (add1 i)])
                            (if (< i k)
                                (let ([gamma (+ (* (a i) alpha) (b i))])
                                  (values (cons alpha beta)
@@ -105,12 +105,13 @@
       (trace alpha beta)
       ;; alpha-beta is sorted by index in _descending_ order, so
       ;; `(beta 0)` is actually the last calculated beta
-      (vector-unfold (lambda (i x)
-                       (let* ([i (add1 i)])
-                         ;; Yet again calculations beyond folding
-                         ;; bound are unnecessary
-                         (if (< i k)
-                             (values x (+ (* (alpha i) x) (beta i)))
-                             (values x #f))))
-                     k
-                     (beta 0)))))
+      (vector-unfold-right
+       (lambda (i x)
+         (let* ([i (- k i)])
+           ;; Yet again calculations beyond folding
+           ;; bound are unnecessary
+           (if (< i k)
+               (values x (+ (* (alpha (- k (add1 i))) x) (beta (- k (add1 i)))))
+               (values x #f))))
+       k
+       (beta (sub1 k))))))
