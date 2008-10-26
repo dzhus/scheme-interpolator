@@ -4,7 +4,6 @@
          srfi/43
          "matrix.ss"
          "shared.ss")
-(require mzlib/trace)
 
 (provide solve-linear
          solve-tridiagonal)
@@ -102,7 +101,6 @@
                        (/ (d 0) (b 0)))])
       (define (alpha i) (car (vector-ref alpha-beta i)))
       (define (beta i) (cdr (vector-ref alpha-beta i)))
-      (trace alpha beta)
       ;; alpha-beta is sorted by index in _descending_ order, so
       ;; `(beta 0)` is actually the last calculated beta
       (vector-unfold-right
