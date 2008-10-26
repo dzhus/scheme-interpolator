@@ -9,7 +9,8 @@
          "point.ss"
          "interpolate.ss"
          "matrix.ss"
-         "gauss.ss")
+         "function.ss"
+         "linear-eq.ss")
 
 (define test-epsilon 0)
 
@@ -108,7 +109,7 @@
   (let* ((grid
           (function->grid function points))
          (grid-interpolated
-          (function->grid (interpolation-result-function (method grid)) points)))
+          (function->grid (function-lambda (method grid)) points)))
     (for-each
      (lambda (point point-interpolated)
        (check-= (point-y point)

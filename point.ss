@@ -1,5 +1,7 @@
 #lang scheme
 
+;;; Point structure
+
 (require srfi/27)
 
 (provide (rename-out [d:make-point make-point])

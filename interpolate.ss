@@ -8,7 +8,7 @@
          "vectors.ss"
          "lambda-folds.ss"
          "matrix.ss"
-         "gauss.ss"
+         "linear-eq.ss"
          "shared.ss"
          "function.ss")
 
