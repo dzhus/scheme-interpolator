@@ -76,8 +76,6 @@
   (let ([k (matrix-size v)])
     (define (a i) (matrix-item A i (sub1 i)))
     (define (b i) (matrix-item A i i))
-    ;; Phantom $c_{k-1}=0$ so we don't need extra conditionals in unfold
-    ;; below
     (define (c i) (matrix-item A i (add1 i)))
     (define (d i) (vector-ref v i))
     (let ([alpha-beta (vector-unfold
