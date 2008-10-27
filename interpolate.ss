@@ -79,7 +79,6 @@
            (* (expt x power) coeff))
          coeffs))))))
 
-;; Spline interpolation prototype
 (define (spline-interpolation-segment points [t1 0] [t2 1])
   (let ((p1 (endpoint->vector (first points)))
         (p2 (endpoint->vector (last points)))
@@ -141,13 +140,15 @@
                             segments))))
          ;; Interpolate on each segment
          (functions (map (lambda (points-pair t)
-                           (let ((t1 (first t)) (t2 (second t)))
+                           ;; On each segment lower bound for parameter is still zero!
+                           (let ((t1 0) (t2 (- (second t) (first t))))
                              (spline-interpolation-segment points-pair t1 t2)))
                          segments parameters)))
     ;; Merge segments into one function
-    (let ((spline (lambda (x)
-                    (display (enclosing-interval-index x parameters))
-                    ((list-ref functions
-                                    (enclosing-interval-index x parameters)) x))))
-      (make-function
-       'vector spline (first (first parameters)) (last (last parameters))))))
+    (define (spline x)
+      (let* ((segment-number (enclosing-interval-index x parameters))
+             ;; Start from zero again
+             (x (- x (first (list-ref parameters segment-number)))))
+        ((list-ref functions segment-number) x)))
+    (make-function
+     'vector spline (first (first parameters)) (last (last parameters)))))
