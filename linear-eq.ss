@@ -6,7 +6,8 @@
          "shared.ss")
 
 (provide solve-linear
-         solve-tridiagonal)
+         solve-tridiagonal
+         solve-by-components)
 
 ;; Solve a system of linear equations given its matrix A and right
 ;; vector v, given A is _invertible_
@@ -111,3 +112,21 @@
                (values x #f))))
        k
        (beta (sub1 k))))))
+
+;; Assuming all elements of `A` are scalar and those of `v` are
+;; vectors of equal length, solve corresponding linear system for each
+;; component of `v` elements, then merge solutions so that the result
+;; is a vector of vectors again
+(define (solve-by-components A v method)
+  (let ((partial-solutions (map (lambda (v-dimension)
+                                  (method A v-dimension))
+                                (map
+                                 (lambda (component)
+                                   (vector-map
+                                    (lambda (i v-element)
+                                      (vector-ref v-element component))
+                                    v))
+                                 (iota (vector-length (vector-ref v 1)))))))
+    ;; Merge solutions
+    (map list->vector
+         (apply zip (map vector->list partial-solutions)))))
