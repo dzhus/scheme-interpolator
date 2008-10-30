@@ -126,7 +126,8 @@
                                     (lambda (i v-element)
                                       (vector-ref v-element component))
                                     v))
-                                 (iota (vector-length (vector-ref v 1)))))))
+                                 (iota (vector-length (vector-ref v 0)))))))
+
     ;; Merge solutions
     (map list->vector
          (apply zip (map vector->list partial-solutions)))))
