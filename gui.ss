@@ -212,8 +212,8 @@
           (send dc clear)
           (when (> (length points) 1)
             (draw-interpolation-plots points
-                                      (send method-chooser get-methods))
-            (for-each (lambda (p) (draw-point p)) points))))
+                                      (send method-chooser get-methods)))
+          (for-each (lambda (p) (draw-point p)) points)))
       
 
       (define/override (on-paint)
