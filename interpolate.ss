@@ -79,7 +79,7 @@
            (* (expt x power) coeff))
          coeffs))))))
 
-(define (spline-interpolation-segment points [t1 0] [t2 1])
+(define (spline-interpolation-segment points [t-max 1])
   (let ((p1 (endpoint->vector (first points)))
         (p2 (endpoint->vector (last points)))
         (dp1 (point-dir (first points)))
@@ -89,15 +89,15 @@
           (b3 (vec:-
                (vec:-
                 (vec:*-number (vec:- p2 p1)
-                              (/ 3 (sqr t2)))
-                (vec:*-number dp1 (/ 2 t2)))
-               (vec:/-number dp2 t2)))
+                              (/ 3 (sqr t-max)))
+                (vec:*-number dp1 (/ 2 t-max)))
+               (vec:/-number dp2 t-max)))
           (b4 (vec:+
                (vec:+
                 (vec:*-number (vec:- p1 p2)
-                              (/ 2 (expt t2 3)))
-                (vec:/-number dp1 (sqr t2)))
-               (vec:/-number dp2 (sqr t2)))))
+                              (/ 2 (expt t-max 3)))
+                (vec:/-number dp1 (sqr t-max)))
+               (vec:/-number dp2 (sqr t-max)))))
       (lambda (t)
         (vec:+
          b1
@@ -119,23 +119,23 @@
       (<= (first interval) x (second interval)))
     (list-index (lambda (i) (in-interval? x i)) intervals))
   ;; Build a matrix of a system we'll use to find tangents at inner
-  ;; points given a list of $t$ intervals
+  ;; points given a list of $t$ upper bounds on each segment
   (define (build-tangents-matrix parameters)
-    (define (t-ref i) (list-ref parameters i))
+    (define (t i) (list-ref parameters i))
     (let ((n (add1 (length parameters))))
       (build-matrix
        (lambda (i j)
          (cond ((or (= i 0) (= i (sub1 n))) (if (= i j) 1 0))
-               ((= i (add1 j)) (second (t-ref i)))
-               ((= i j) (* 2 (+ (first (t-ref i)) (second (t-ref i)))))
-               ((= i (sub1 j)) (first (t-ref i)))
+               ((= i (add1 j)) (t i))
+               ((= i j) (* 2 (+ (t i) (t (sub1 i)))))
+               ((= i (sub1 j)) (t (sub1 i)))
                (else 0)))
        n n)))
-  ;; Given a list of parameter intervals and list of points, build
+  ;; Given a list of parameter upper bounds and list of points, build
   ;; vector which is a right part in linear system used to find
   ;; tangents at inner points
   (define (build-tangents-vector parameters points)
-    (define (t-ref i) (list-ref parameters i))
+    (define (t i) (list-ref parameters i))
     (define (P-ref i) (list-ref points i))
     (let ((n (length points)))
       (build-vector
@@ -143,17 +143,16 @@
        (lambda (i)
          (cond ((or (= i 0) (= i (sub1 n))) (point-dir (P-ref i)))
                (else
-                (let ((t (t-ref i)))
-                  (vec:*-number
-                   (vec:+ (vec:*-number 
-                           (vec:- (endpoint->vector (P-ref (add1 i)))
-                                  (endpoint->vector (P-ref i)))
-                           (sqr (first t)))
-                          (vec:*-number 
-                           (vec:- (endpoint->vector (P-ref i))
-                                  (endpoint->vector (P-ref (sub1 i))))
-                           (sqr (second t))))
-                   (/ 3 (* (first t) (second t)))))))))))
+                (vec:*-number
+                 (vec:+ (vec:*-number
+                         (vec:- (endpoint->vector (P-ref (add1 i)))
+                                (endpoint->vector (P-ref i)))
+                         (sqr (t (sub1 i))))
+                        (vec:*-number
+                         (vec:- (endpoint->vector (P-ref i))
+                                (endpoint->vector (P-ref (sub1 i))))
+                         (sqr (t i))))
+                 (/ 3 (* (t i) (t (sub1 i)))))))))))
   (define (populate-with-directions points tangents)
     (define (add-direction point dir)
       (make-point (point-x point) (point-y point) dir))
@@ -165,35 +164,34 @@
                     (list (list (first l)
                                 (second l)))
                     (drop l 2))))
-  ;; `(a b c)` to `'(0 a a+b a+b+c)`
-  (define (shift-accumulating list)
-    (reverse! (fold (lambda (x r)
-                      (cons (+ x (car r)) r))
-                    '(0)
-                    list)))
-  (let* ((parameters (split-to-pairs
-                      (shift-accumulating
-                       (map (lambda (pair)
-                              (make-parameter-bound pair))
-                            ;; We have to split points twice
-                            (split-to-pairs points)))))
+  ;; `((a b) (c d))` to `((a b) (b+c b+d))`
+  (define (stack-intervals list)
+    (drop (reverse! (fold (lambda (x r)
+                            (cons (map (lambda (p) (+ p (second (car r)))) x) r))
+                          '((0 0))
+                          list))
+          1))
+  (let* ((parameters (map make-parameter-bound
+                          ;; (We'll have to split points twice)
+                          (split-to-pairs points)))
          (A (build-tangents-matrix parameters))
          (v (build-tangents-vector parameters points))
-         (tangents (begin
-                     (solve-by-components A v solve-tridiagonal)))
+         (tangents (solve-by-components A v solve-tridiagonal))
          (segments (split-to-pairs
                     (populate-with-directions points tangents)))
          ;; Interpolate on each segment
          (functions (map (lambda (points-pair t)
-                           ;; @TODO On each segment lower bound for parameter is still zero!
-                           (let ((t1 (first t)) (t2 (second t)))
-                             (spline-interpolation-segment points-pair t1 t2)))
+                           (spline-interpolation-segment points-pair t))
                          segments parameters)))
     ;; Merge segments into one function
-    (define (spline x)
-      (let* ((segment-number (enclosing-interval-index x parameters)))
-             ;; @TODO Start from zero again
-             ;(x (- x (first (list-ref parameters segment-number)))))
-        ((list-ref functions segment-number) x)))
-    (make-function
-     'vector spline (first (first parameters)) (last (last parameters)))))
+    (let* ((parameter-intervals (map (lambda (t) (list 0 t)) parameters))
+           (shifted-parameters (stack-intervals parameter-intervals)))
+      (define (spline x)
+        ;; We treat parameter as continuous along the whole spline in
+        ;; order to choose corresponding segment. On each segment
+        ;; lower bound for argument is still zero!
+        (let* ((segment-number (enclosing-interval-index x shifted-parameters))
+               (x (- x (first (list-ref shifted-parameters segment-number)))))
+          ((list-ref functions segment-number) x)))
+      (make-function
+       'vector spline (first (first shifted-parameters)) (last (last shifted-parameters))))))
