@@ -210,7 +210,7 @@
       (define/public (redraw-interpolation)
         (let ((dc (get-dc)))
           (send dc clear)
-          (when (not (null? points))
+          (when (> (length points) 1)
             (draw-interpolation-plots points
                                       (send method-chooser get-methods))
             (for-each (lambda (p) (draw-point p)) points))))
