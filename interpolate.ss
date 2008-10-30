@@ -184,8 +184,8 @@
                            (spline-interpolation-segment points-pair t))
                          segments parameters)))
     ;; Merge segments into one function
-    (let (shifted-parameters (stack-intervals
-                              (map (lambda (t) (list 0 t)) parameters)))
+    (let ((shifted-parameters (stack-intervals
+                               (map (lambda (t) (list 0 t)) parameters))))
       (define (spline x)
         ;; We treat parameter as continuous along the whole spline in
         ;; order to choose corresponding segment. On each segment
