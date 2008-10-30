@@ -63,26 +63,26 @@
 
    (test-case
     "absmax-nonzero-index in column"
-    (check-equal? (absmax-nonzero-vector-index (vector 0 1 2)) 2)
-    (check-equal? (absmax-nonzero-vector-index (vector 11 -12 10)) 1)
-    (check-equal? (absmax-nonzero-vector-index (vector 0 7 999 -1000)) 3)
+    (check-equal? (absmax-nonzero-vector-index '#( 0 1 2)) 2)
+    (check-equal? (absmax-nonzero-vector-index '#( 11 -12 10)) 1)
+    (check-equal? (absmax-nonzero-vector-index '#(0 7 999 -1000)) 3)
     (let ((n (add1 (random-integer 1000))))
       (check-equal? (absmax-nonzero-vector-index (list->vector (iota n))) (sub1 n)))
     (check-equal? (absmax-nonzero-vector-index (vector 1 -1 (random-integer 9) -2 3 3 4 4 10 -10 0)) 8))
 
    (test-case
     "Nondestructive vector items swapping (swap-vector-items)"
-    (check-equal? (swap-vector-items 0 1 (vector 1 2)) (vector 2 1))
-    (check-equal? (swap-vector-items 1 3 (list->vector (iota 5))) (vector 0 3 2 1 4))
-    (check-equal? (swap-vector-items 2 5 (vector 9 17 2 -5 -5 0 0 1)) (vector 9 17 0 -5 -5 2 0 1))
-    (check-equal? (swap-vector-items 4 4 (vector 0 0 0 0 1)) (vector 0 0 0 0 1))
-    (check-equal? (swap-vector-items 1 2 (vector 3 3 3)) (vector 3 3 3)))))
+    (check-equal? (swap-vector-items 0 1 '#(1 2)) '#(2 1))
+    (check-equal? (swap-vector-items 1 3 (list->vector (iota 5))) '#(0 3 2 1 4))
+    (check-equal? (swap-vector-items 2 5 '#(9 17 2 -5 -5 0 0 1)) '#(9 17 0 -5 -5 2 0 1))
+    (check-equal? (swap-vector-items 4 4 '#(0 0 0 0 1)) '#(0 0 0 0 1))
+    (check-equal? (swap-vector-items 1 2 '#(3 3 3)) '#(3 3 3)))))
 
 (define-test-suite matrix-tests
   (test-case
    "Matrix operations"
    (check-true #f)))
-
+
 (define-check (check-vectors v1 v2 epsilon)
   (vector= (lambda (x y) (check-= x y epsilon)) v1 v2))
 
@@ -90,38 +90,39 @@
   (test-case
    "Solve systems of linear equations"
    (check-vectors (solve-linear (matrix (row 1 3)
-                                       (row 5 9))
-                               (column 4 14))
-                  (vector 1 1)
+                                        (row 5 9))
+                                (column 4 14))
+                  '#(1 1)
                   test-epsilon)
    (check-vectors (solve-linear (matrix (row 1 2 3)
-                                       (row 4 5 9)
-                                       (row 9 -10 0))
-                               (column 16 43 -50))
-                 (vector 0 5 2)
-                 test-epsilon)
+                                        (row 4 5 9)
+                                        (row 9 -10 0))
+                                (column 16 43 -50))
+                  '#(0 5 2)
+                  test-epsilon)
    (check-vectors (solve-linear (matrix (row -4 5 2 65)
-                                       (row 2 -10 11 13)
-                                       (row 3/7 -6 192 2)
-                                       (row 6 0 13/8 0.5))
-                               (column 580 262 27399/14 35.75))
-                 (vector 2.5 -3.0 10.0 9.0)
-                 test-epsilon)
+                                        (row 2 -10 11 13)
+                                        (row 3/7 -6 192 2)
+                                        (row 6 0 13/8 0.5))
+                                (column 580 262 27399/14 35.75))
+                  '#(2.5 -3.0 10.0 9.0)
+                  test-epsilon)
    (check-vectors (solve-linear (matrix (row 2 -9 5)
-                                       (row 1.2 -5.3999 6)
-                                       (row 1 -1 -7.5))
-                               (column -4 0.6001 -8.5))
-                  (vector 0.0 1.0 1.0)
+                                        (row 1.2 -5.3999 6)
+                                        (row 1 -1 -7.5))
+                                (column -4 0.6001 -8.5))
+                  '#(0.0 1.0 1.0)
                   test-epsilon))
+
   (test-case
    "TDMA"
    (check-vectors (solve-tridiagonal (matrix (row 5 -1 0 0)
-                                            (row 2 4.6 -1 0)
-                                            (row 0 2 3.6 -0.8)
-                                            (row 0 0 3 4.4))
-                                    (column 2 3.3 2.6 7.2))
-                 (vector 0.52560 0.628 0.64 1.2)
-                 test-epsilon)
+                                             (row 2 4.6 -1 0)
+                                             (row 0 2 3.6 -0.8)
+                                             (row 0 0 3 4.4))
+                                     (column 2 3.3 2.6 7.2))
+                  '#(0.52560 0.628 0.64 1.2)
+                  test-epsilon)
    (check-vectors (solve-tridiagonal (matrix (row 1    2    0    0)
                                              (row 1.5  4    5    0)
                                              (row 0   -109 -1000 102)
@@ -130,9 +131,9 @@
                                              10.5
                                              -1107.98
                                              -4.163))
-                  (vector 1 1 1 0.01)
+                  '#(1 1 1 0.01)
                   test-epsilon)))
-
+
 (define-check (check-interpolation method function points epsilon)
   (let* ((grid
           (function->grid function points))
@@ -143,7 +144,7 @@
        (check-= (point-y point)
                 (point-y point-interpolated)
                 epsilon
-                (format "Interpolation ~s failed for ~s at x=~s" 
+                (format "Interpolation ~s failed for ~s at x=~s"
                         method function (point-x point))))
      grid grid-interpolated)))
 
