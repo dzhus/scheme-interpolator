@@ -1,0 +1,7 @@
+-*- mode: org -*-
+
+* TODO Use generics for vector operations
+* TODO Abandon ugly `lagrange-lambda-interpolation`
+* TODO Support specifying tangent in inner points of a spline
+* TODO Use special algorithms for `polynomial-interpolation`
+  Using LU-decomposition for Vandermonde matrix is wasteful
