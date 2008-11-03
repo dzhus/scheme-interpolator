@@ -93,19 +93,16 @@
                 (vec:*-number dp1 (/ 2 t-max)))
                (vec:/-number dp2 t-max)))
           (b4 (vec:+
-               (vec:+
-                (vec:*-number (vec:- p1 p2)
-                              (/ 2 (expt t-max 3)))
-                (vec:/-number dp1 (sqr t-max)))
+               (vec:*-number (vec:- p1 p2)
+                             (/ 2 (expt t-max 3)))
+               (vec:/-number dp1 (sqr t-max))
                (vec:/-number dp2 (sqr t-max)))))
       (lambda (t)
         (vec:+
          b1
-         (vec:+
-          (vec:*-number b2 t)
-          (vec:+
-           (vec:*-number b3 (sqr t))
-           (vec:*-number b4 (expt t 3)))))))))
+         (vec:*-number b2 t)
+         (vec:*-number b3 (sqr t))
+         (vec:*-number b4 (expt t 3)))))))
 
 (define (spline-interpolation points)
   ;; Return upper bound for parameter of a spline interpolating

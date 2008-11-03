@@ -8,14 +8,13 @@
 (provide + -
          *-number /-number)
 
-;; TODO: arbitary arity
-(define (+ v1 v2)
-  (vector-map (lambda (i x y) (std:+ x y)) v1 v2))
-
-;; (define-syntax +
-;;   (syntax-rules ()
-;;     [(+ v1 v2) (vector-map (lambda (i x y) (std:+ x y)) v1 v2)]
-;;     [(+ v1 v2 ...) (+ (+ v1 v2) ...)]))
+;; @TODO: Rewrite this with generic `std-vector-op` using fixed point
+;; combinator
+(define (+ v . rest)
+  (if (null? rest)
+      v
+      (apply + (append (list (vector-map (lambda (i x y) (std:+ x y)) v (first rest)))
+                       (drop rest 1)))))
 
 (define (*-number v s)
   (vector-map (lambda (i x) (* x s)) v))
