@@ -1,23 +1,65 @@
 #lang scheme
 
+;;; Solving linear equations
+
 (require srfi/1
          srfi/43
-         "matrix.ss"
+         pyani-lib/matrix
          "shared.ss")
 
 (provide solve-linear
          solve-tridiagonal
          solve-by-components)
 
+;; Miscellaneous functions used to provide abstraction from matrix
+;; representation
+(define (first-row matrix)
+  (vector-ref matrix 0))
+
+(define (row-drop-right row n)
+  (vector-copy row 0 (- (vector-length row) n)))
+
+(define (row-drop-left row n)
+  (vector-copy row n))
+
+(define (row-but-first row)
+  (row-drop-left row 1))
+
+(define (row-but-last row)
+  (row-drop-right row 1))
+
+(define matrix-but-first-row row-but-first)
+
+(define (first-column matrix)
+  (vector-map (lambda (i row)
+                (row-ref row 0))
+              matrix))
+
+(define (matrix-but-first-column matrix)
+  (vector-map (lambda (i row)
+                (row-but-first row))
+              matrix))
+
+(define (absmax-nonzero-column-index column)
+  (fold
+   (lambda (i prev)
+     (if (> (abs (column-ref column i))
+            (abs (column-ref column prev)))
+         i
+         prev))
+   0
+   (iota (column-length column))))
+
+
 ;; Solve a system of linear equations given its matrix A and right
 ;; vector v, given A is _invertible_
 (define (solve-linear A v)
   ;; Get the top left coefficient of an augmented matrix
   (define (top-left equations)
-    (matrix-item equations 0 0))
+    (matrix-ref equations 0 0))
   ;; Get the top right coefficient of an augmented matrix
   (define (top-right equations)
-    (matrix-item equations 0 (sub1 (row-length (first-row equations)))))
+    (matrix-ref equations 0 (sub1 (row-length (first-row equations)))))
   (define (column-reduce equations)
     (let ((first-equation (first-row equations))
           (top-left (top-left equations)))
@@ -25,9 +67,9 @@
        (matrix-map
         (lambda (i j a)
           (- a
-             (/ (* (row-item first-equation j)
+             (/ (* (row-ref first-equation j)
                    ;; We skip the first row, so add 1 to row index
-                   (matrix-item equations (add1 i) 0))
+                   (matrix-ref equations (add1 i) 0))
                 top-left)))
         (matrix-but-first-row equations)))))
   ;; Given an augmented matrix with one equation of n variables and a
@@ -41,7 +83,7 @@
             (- (top-right equations)
                (vector-sum
                 (vector-map (lambda (i x)
-                              (* x (row-item coeffs-row i)))
+                              (* x (row-ref coeffs-row i)))
                             subsolution)))))))
   (define (trivial? equations)
     (and (= (matrix-size equations) 1)
@@ -59,7 +101,7 @@
         ;; element always exists as A is invertible)
         (let* ((leading-row (absmax-nonzero-column-index
                              (first-column equations)))
-               (equations (swap-matrix-rows 0 leading-row equations)))
+               (equations (swap-matrix-rows equations 0 leading-row)))
           (if (= (top-left equations) 0)
               (error "No solution: dependant columns")
               (let ((subsolution (solve-equations
@@ -72,12 +114,13 @@
   (let ((augmented (add-column A v)))
     (solve-equations augmented)))
 
+
 ;; Solve system of equations with tridiagonal matrix
 (define (solve-tridiagonal A v)
   (let ([k (matrix-size v)])
-    (define (a i) (matrix-item A i (sub1 i)))
-    (define (b i) (matrix-item A i i))
-    (define (c i) (matrix-item A i (add1 i)))
+    (define (a i) (matrix-ref A i (sub1 i)))
+    (define (b i) (matrix-ref A i i))
+    (define (c i) (matrix-ref A i (add1 i)))
     (define (d i) (vector-ref v i))
     (let ([alpha-beta (vector-unfold
                        (lambda (i alpha beta)
@@ -113,6 +156,7 @@
        k
        (beta (sub1 k))))))
 
+
 ;; Assuming all elements of `A` are scalar and those of `v` are
 ;; vectors of equal length, solve corresponding linear system for each
 ;; component of `v` elements, then merge solutions so that the result

@@ -10,8 +10,8 @@
          "shared.ss"
          "point.ss"
          "interpolate.ss"
-         "matrix.ss"
          "function.ss"
+         pyani-lib/matrix
          "linear-eq.ss")
 
 (define test-epsilon 1e-10)
@@ -85,11 +85,6 @@
     (check-= (vector-sum '#(1 2 3 4 5 5 4 3 2 1)) 30 0)
     (check-= (vector-sum '#(1 4 2 4)) (vector-sum '#(2 1 5 3)) 0)
     (check-= (vector-sum '#(-0 0 -0.0)) 0 0))))
-
-(define-test-suite matrix-tests
-  (test-case
-   "Matrix operations"
-   (check-true #f)))
 
 (define-check (check-vectors v1 v2 epsilon)
   (vector= (lambda (x y) (check-= x y epsilon)) v1 v2))
@@ -175,6 +170,5 @@
 
 (exit (run-tests (test-suite "All tests"
                              shared-tests
-                             matrix-tests
                              interpolation-tests
                              lineq-tests)))

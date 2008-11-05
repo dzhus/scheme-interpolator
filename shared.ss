@@ -28,5 +28,6 @@
                         ((= n j) (vector-ref vec i))
                         (else (vector-ref vec n))))))
 
+;; TODO Already available in pyani-lib
 (define (vector-sum vec)
   (vector-fold (lambda (i sum x) (+ sum x)) 0 vec))

@@ -21,7 +21,7 @@
     (define/public (get-methods)
       (list
        (let ((n (send this get-selection)))
-         ;; @TODO make this list an initialization variable
+         ;; TODO make this list an initialization variable
          (list-ref (list lagrange-lambda-interpolation
                          polynomial-interpolation
                          spline-interpolation)
