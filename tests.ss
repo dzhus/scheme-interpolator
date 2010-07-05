@@ -12,6 +12,8 @@
          "interpolate.ss"
          "function.ss")
 
+(define test-epsilon 1e-10)
+
 (define-check (check-interpolation method function points epsilon)
   (let* ((grid
           (function->grid function points))
