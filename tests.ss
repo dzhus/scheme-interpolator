@@ -40,9 +40,7 @@
      (for-each
       (lambda (f domain)
         (check-interpolation lagrange-lambda-interpolation
-                             f domain test-epsilon)
-        (check-interpolation polynomial-interpolation
-                             f domain 1e-1))
+                             f domain test-epsilon))
       test-functions domains))))
 
 (exit (run-tests (test-suite "All tests"
