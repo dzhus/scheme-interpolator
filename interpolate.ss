@@ -6,15 +6,15 @@
          srfi/43
          "point.ss"
          "lambda-folds.ss"
-         "linear-eq.ss"
          "shared.ss"
          "function.ss"
+         (planet wmfarr/simple-matrix:1:0/matrix)
          pyani-lib/matrix
-         pyani-lib/generic-ops)
+         pyani-lib/vector
+         pyani-lib/linear-eq)
 
 (provide function->grid
          lagrange-lambda-interpolation
-         polynomial-interpolation
          spline-interpolation)
 
 (define (function->grid function domain)
@@ -52,33 +52,6 @@
                    ((make-lagrange-fraction i) x))))
        (iota k))))))
 
-;; Build interpolation polynomial solving a system of linear equations
-;; with Vandermonde matrix (heavily prone to precision errors as usual
-;; Gauss elimination is used in `solve-linear`)
-(define (polynomial-interpolation points)
-  (let* ((k (length points))
-         (matrix (apply matrix
-                  (map
-                   (lambda (point)
-                     (let ((x (point-x point)))
-                       (apply row
-                        (map
-                         (lambda (power)
-                           (expt x power))
-                         (iota k)))))
-                   points)))
-         (right-column (apply column
-                              (map point-y points)))
-         (coeffs (solve-linear matrix right-column)))
-    (make-function
-     'scalar
-     (lambda (x)
-       (vector-sum
-        (vector-map
-         (lambda (power coeff)
-           (* (expt x power) coeff))
-         coeffs))))))
-
 (define (spline-interpolation-segment points [t-max 1])
   (let ((p1 (endpoint->vector (first points)))
         (p2 (endpoint->vector (last points)))
@@ -86,19 +59,19 @@
         (dp2 (point-dir (last points))))
     (let ((b1 p1)
           (b2 dp1)
-          (b3 (-
-               (-
-                (* (- p2 p1) (/ 3 (sqr t-max)))
-                (* dp1 (/ 2 t-max)))
-               (/ dp2 t-max)))
-          (b4 (+
-               (* (- p1 p2) (/ 2 (expt t-max 3)))
-               (/ dp1 (sqr t-max))
-               (/ dp2 (sqr t-max)))))
+          (b3 (vector-sub
+               (vector-sub
+                (vector-scale (vector-sub p2 p1) (/ 3 (sqr t-max)))
+                (vector-scale dp1 (/ 2 t-max)))
+               (vector-scale dp2 t-max)))
+          (b4 (vectors-add
+                (vector-scale (vector-sub p1 p2) (/ 2 (expt t-max 3)))
+                (vector-scale dp1 (/ (sqr t-max)))
+                (vector-scale dp2 (/ (sqr t-max))))))
       (lambda (t)
-        (+
+        (vectors-add
          b1
-         (* b2 t) (* b3 (sqr t)) (* b4 (expt t 3)))))))
+         (vector-scale b2 t) (vector-scale b3 (sqr t)) (vector-scale b4 (expt t 3)))))))
 
 (define (spline-interpolation points)
   ;; Return upper bound for parameter of a spline interpolating
@@ -117,13 +90,13 @@
     (define (t i) (list-ref parameters i))
     (let ((n (add1 (length parameters))))
       (build-matrix
+       n n
        (lambda (i j)
          (cond ((or (= i 0) (= i (sub1 n))) (if (= i j) 1 0))
                ((= i (add1 j)) (t i))
                ((= i j) (* 2 (+ (t i) (t (sub1 i)))))
                ((= i (sub1 j)) (t (sub1 i)))
-               (else 0)))
-       n n)))
+               (else 0))))))
   ;; Given a list of parameter upper bounds and list of points, build
   ;; vector which is a right part in linear system used to find
   ;; tangents at inner points
@@ -136,13 +109,14 @@
        (lambda (i)
          (cond ((or (= i 0) (= i (sub1 n))) (point-dir (P-ref i)))
                (else
-                (*
-                 (+ (* (- (endpoint->vector (P-ref (add1 i)))
-                          (endpoint->vector (P-ref i)))
-                       (sqr (t (sub1 i))))
-                    (* (- (endpoint->vector (P-ref i))
-                          (endpoint->vector (P-ref (sub1 i))))
-                       (sqr (t i))))
+                (vector-scale
+                 (vector-add
+                  (vector-scale (vector-sub (endpoint->vector (P-ref (add1 i)))
+                                            (endpoint->vector (P-ref i)))
+                                (sqr (t (sub1 i))))
+                  (vector-scale (vector-sub (endpoint->vector (P-ref i))
+                                            (endpoint->vector (P-ref (sub1 i))))
+                                (sqr (t i))))
                  (/ 3 (* (t i) (t (sub1 i)))))))))))
   (define (populate-with-directions points tangents)
     (define (add-direction point dir)

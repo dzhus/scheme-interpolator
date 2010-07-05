@@ -4,9 +4,8 @@
          srfi/43)
 
 (provide but-kth-item
-         absmax-nonzero-vector-index
-         swap-vector-items
-         vector-sum)
+         absmax-nonzero-vector-index)
+
 
 (define (but-kth-item list k)
   (append (take list k) (drop list (+ k 1))))
@@ -20,14 +19,3 @@
          prev))
    0
    (iota (vector-length vec))))
-
-(define (swap-vector-items i j vec)
-  (build-vector (vector-length vec)
-                (lambda (n)
-                  (cond ((= n i) (vector-ref vec j))
-                        ((= n j) (vector-ref vec i))
-                        (else (vector-ref vec n))))))
-
-;; TODO Already available in pyani-lib
-(define (vector-sum vec)
-  (vector-fold (lambda (i sum x) (+ sum x)) 0 vec))

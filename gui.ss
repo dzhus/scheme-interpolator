@@ -23,7 +23,6 @@
        (let ((n (send this get-selection)))
          ;; TODO make this list an initialization variable
          (list-ref (list lagrange-lambda-interpolation
-                         polynomial-interpolation
                          spline-interpolation)
                    n))))))
 
@@ -231,7 +230,6 @@
                            [parent frame]
                            [label "Method"]
                            [choices '("Lagrange (λ)"
-                                      "Lagrange (matrix)"
                                       "Splines")]))
 
 (define pad (new (interpolation-workspace-mixin
