@@ -1,4 +1,4 @@
-SCHEME := /usr/bin/mzscheme
+SCHEME := /usr/bin/racket
 TESTFILE := tests.ss
 
 .PHONY: check
